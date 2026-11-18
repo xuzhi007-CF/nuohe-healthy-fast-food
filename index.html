@@ -5,18 +5,19 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#ef4f8a">
 <title>诺合健康快餐</title>
+<link rel="icon" type="image/png" href="logo.png">
 <style>
 :root{--pink:#ef4f8a;--green:#21b573;--blue:#1677ff;--ink:#17202a;--muted:#73808c;--bg:#f5f7fa;--card:#fff;--line:#e8edf2}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
 .app{max-width:760px;margin:auto;padding-bottom:40px}.top{background:linear-gradient(135deg,#fff 0%,#fff5f8 100%);padding:18px 16px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-.brand{display:flex;align-items:center;gap:10px}.logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#ef4f8a,#18b8a0);display:grid;place-items:center;color:white;font-size:26px;font-weight:800;box-shadow:0 5px 14px #ef4f8a35}.brand h1{font-size:20px;margin:0}.brand small{color:var(--muted)}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:44px;height:44px;border-radius:13px;object-fit:contain;display:block;flex-shrink:0}.brand h1{font-size:20px;margin:0}.brand small{color:var(--muted)}
 main{padding:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 4px 18px #17202a08}.title{font-weight:800;font-size:17px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.field input,.field select{width:100%;border:1px solid #dce3e9;border-radius:11px;padding:11px;font-size:16px;background:#fff;outline:none}.field input:focus{border-color:#f08bb0;box-shadow:0 0 0 3px #ef4f8a15}.btn{border:0;border-radius:12px;padding:11px 14px;font-size:15px;font-weight:700;cursor:pointer}.primary{background:var(--pink);color:#fff}.secondary{background:#eef2f5;color:#334}.green{background:#e9f8f1;color:#128453}.danger{background:#fff0f2;color:#d73555}.wide{width:100%;margin-top:10px}.budget{display:flex;justify-content:space-between;background:#fafbfc;border-radius:12px;padding:11px 12px;margin-top:10px}.budget b{color:var(--pink)}.tags{display:flex;gap:7px;flex-wrap:wrap}.tag{padding:7px 10px;border-radius:999px;background:#f1f4f6;color:#47525c;font-size:12px}.tag.active{background:#ffe4ee;color:#d52e6b}.dish{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);gap:10px}.dish:last-child{border-bottom:0}.dish .name{font-weight:700}.dish .meta{font-size:12px;color:var(--muted);margin-top:3px}.price{font-weight:800;white-space:nowrap}.dish-actions{display:flex;gap:6px;align-items:center}.small{padding:7px 9px;font-size:12px}.result{border:2px solid #f3b4c9;background:#fffafd}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:#f8fafb;border-radius:12px;padding:10px}.metric span{display:block;font-size:11px;color:var(--muted)}.metric b{display:block;font-size:18px;margin-top:3px}.empty{padding:20px;text-align:center;color:var(--muted)}.history-item{padding:12px 0;border-bottom:1px solid var(--line)}.history-item:last-child{border-bottom:0}.hist-head{display:flex;justify-content:space-between;gap:10px}.hist-head b{font-size:14px}.hist-detail{color:#59656f;font-size:12px;line-height:1.7;margin-top:5px}.modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:20}.modal.show{display:flex}.sheet{background:#fff;width:100%;max-width:760px;margin:auto;border-radius:20px 20px 0 0;max-height:85vh;overflow:auto;padding:16px}.sheet h3{margin-top:0}.checkrow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}.checkrow input{width:20px;height:20px}.toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%);background:#20262d;color:#fff;padding:10px 15px;border-radius:999px;font-size:13px;display:none;z-index:30}.toast.show{display:block}.footer{text-align:center;color:#98a2ab;font-size:11px;padding:5px}
 @media(max-width:480px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr 1fr}.app{width:100%}}
 </style>
 </head>
 <body>
 <div class="app">
-<header class="top"><div class="brand"><div class="logo">诺</div><div><h1>诺合健康快餐</h1><small>每天一起吃饭 · 自动搭配 · 公共菜AA</small></div></div></header>
+<header class="top"><div class="brand"><img class="logo" src="logo.png" alt="诺合 Logo" width="44" height="44"><div><h1>诺合健康快餐</h1><small>每天一起吃饭 · 自动搭配 · 公共菜AA</small></div></div></header>
 <main>
 <section class="card">
 <div class="title">🍽️ 今天吃什么</div>
@@ -78,84 +79,111 @@ const soups=[["花旗参乌鸡汤",10,"滋补"],["虫草花猪肚汤",10,"滋补
 
 let avoid=new Set(JSON.parse(localStorage.getItem("nuoheAvoid")||"[]"));
 let current=[], selectedSoups=JSON.parse(localStorage.getItem("nuoheSoups")||"{}");
+let currentSettings=null;
 
 function money(n){return "¥"+n.toFixed(2).replace(".00","")}
-function updateBudget(){let p=+people.value||1,b=+perPerson.value||0;budget.textContent=money(p*b)}
-people.oninput=perPerson.oninput=updateBudget;
+function readOrderInputs(){
+ const n=Number(people.value),per=Number(perPerson.value),budgetCents=n*per*100;
+ if(!Number.isSafeInteger(n)||n<1||!Number.isSafeInteger(per)||per<1||!Number.isSafeInteger(budgetCents))return null;
+ return {people:n,per,budgetCents};
+}
+function clearCurrent(){current=[];currentSettings=null;result.innerHTML="";resultCard.style.display="none"}
+function currentTotalCents(){return current.reduce((sum,d)=>sum+Math.round(d[1]*100),0)}
+function updateBudget(){const settings=readOrderInputs();budget.textContent=settings?money(settings.budgetCents/100):"请输入正整数"}
+people.oninput=perPerson.oninput=()=>{const hadCurrent=current.length>0;clearCurrent();updateBudget();if(hadCurrent)toast("人数或预算已更改，请重新生成菜单")};
 
 function renderAvoid(){
  avoidTags.innerHTML=avoid.size?[...avoid].map(x=>`<span class="tag active">${x}</span>`).join(""):"<span class='tag'>暂未排除菜品</span>";
 }
 function openAvoid(){avoidList.innerHTML=dishes.map(d=>`<label class="checkrow"><span>${d[0]} <small style="color:#89939d">¥${d[1]}</small></span><input type="checkbox" value="${d[0]}" ${avoid.has(d[0])?"checked":""}></label>`).join("");avoidModal.classList.add("show")}
 function closeAvoid(){avoidModal.classList.remove("show")}
-function saveAvoid(){avoid=new Set([...avoidList.querySelectorAll("input:checked")].map(x=>x.value));localStorage.setItem("nuoheAvoid",JSON.stringify([...avoid]));renderAvoid();closeAvoid();toast("排除设置已保存")}
-function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+function saveAvoid(){const hadCurrent=current.length>0;avoid=new Set([...avoidList.querySelectorAll("input:checked")].map(x=>x.value));localStorage.setItem("nuoheAvoid",JSON.stringify([...avoid]));renderAvoid();closeAvoid();if(!hadCurrent||generate())toast("排除设置已保存")}
+function shuffle(a,random=Math.random){const copy=[...a];for(let i=copy.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
+
+function chooseMenu(pool,budgetCents,maxCount,random=Math.random){
+ maxCount=Math.min(maxCount,pool.length);
+ const states=Array.from({length:maxCount+1},()=>new Map());
+ states[0].set("0:0",{total:0,mask:0,arr:[]});
+ // Descending counts keep each dish unique; maps contain only reachable sums.
+ for(const dish of shuffle(pool,random)){
+   const price=Math.round(dish[1]*100),bit=dish[2]==="素菜"?1:dish[2]==="荤菜"?2:4;
+   if(price>budgetCents)continue;
+   for(let count=maxCount-1;count>=0;count--){
+     for(const previous of states[count].values()){
+       const total=previous.total+price,mask=previous.mask|bit,key=total+":"+mask;
+       if(total>budgetCents)continue;
+       if(!states[count+1].has(key)||random()<.5)states[count+1].set(key,{total,mask,arr:[...previous.arr,dish]});
+     }
+   }
+ }
+ let best=null,bestRank=null;
+ for(let count=1;count<=maxCount;count++){
+   for(const candidate of states[count].values()){
+     const rank=[Number((candidate.mask&3)===3),count,Number(Boolean(candidate.mask&4)),candidate.total];
+     const difference=bestRank?rank.findIndex((value,i)=>value!==bestRank[i]):-1;
+     if(!best||difference>=0&&rank[difference]>bestRank[difference]||difference===-1&&random()<.5){best=candidate;bestRank=rank}
+   }
+ }
+ return shuffle(best?best.arr:[],random);
+}
 
 function generate(){
- const n=Math.max(1,+people.value||1), budgetTotal=n*(+perPerson.value||0);
- let pool=dishes.filter(d=>!avoid.has(d[0]));
- if(pool.length<3){toast("可选菜品太少，请减少排除项");return}
- // target dish count based on people
- let count=n<=2?3:n<=4?4:n<=6?6:n<=9?7:9;
- count=Math.min(count,pool.length);
- // choose balanced categories: at least 1 veg, 1 protein, 1 egg/tofu when available
- let veg=shuffle(pool.filter(d=>["素菜"].includes(d[2])))[0];
- let protein=shuffle(pool.filter(d=>d[2]==="荤菜"))[0];
- let light=shuffle(pool.filter(d=>["蛋类","豆制品"].includes(d[2])))[0];
- let chosen=[];[veg,protein,light].forEach(x=>{if(x&&!chosen.some(y=>y[0]===x[0]))chosen.push(x)});
- let remaining=shuffle(pool.filter(x=>!chosen.some(y=>y[0]===x[0])));
- // prefer total under budget, but use enough variety; then improve toward 60-85% budget
- for(let d of remaining){if(chosen.length>=count)break;chosen.push(d)}
- // pick random candidate combinations until best fit
- let best=null, target=budgetTotal*.78;
- for(let t=0;t<300;t++){
-   let arr=shuffle(pool).slice(0,count), cats=new Set(arr.map(x=>x[2]));
-   if(!cats.has("素菜")||!cats.has("荤菜"))continue;
-   let total=arr.reduce((s,x)=>s+x[1],0);
-   if(total>budgetTotal)continue;
-   let score=Math.abs(total-target)+(cats.has("蛋类")||cats.has("豆制品")?0:5);
-   if(!best||score<best.score)best={arr,total,score};
- }
- if(best){chosen=best.arr}
- else {chosen=chosen.filter(Boolean).slice(0,count);chosen=chosen.sort(()=>Math.random()-.5)}
- current=chosen;
- let total=chosen.reduce((s,x)=>s+x[1],0), avg=total/n;
- result.innerHTML=chosen.map((d,i)=>`<div class="dish"><div><div class="name">${i+1}. ${d[0]}</div><div class="meta">${d[2]}</div></div><div class="dish-actions"><span class="price">¥${d[1]}</span><button class="btn danger small" onclick="excludeFromResult('${d[0]}')">不想吃</button></div></div>`).join("");
- document.getElementById("total").textContent=money(total);document.getElementById("avg").textContent=money(avg);document.getElementById("remain").textContent=money(Math.max(0,budgetTotal-total));
- quality.textContent=(chosen.some(d=>d[2]==="素菜")&&chosen.some(d=>d[2]==="荤菜"))?"荤素均衡":"随机组合";
- resultCard.style.display="block";renderSoups();saveHistory();
+ clearCurrent();
+ const settings=readOrderInputs();
+ if(!settings){toast("请输入有效的正整数人数和人均预算");return false}
+ const n=settings.people,count=n<=2?3:n<=4?4:n<=6?6:n<=9?7:9;
+ const pool=dishes.filter(d=>!avoid.has(d[0]));
+ const chosen=chooseMenu(pool,settings.budgetCents,count);
+ if(!chosen.length){toast(pool.length?"预算不足，请提高预算或调整排除项":"没有可选菜品，请减少排除项");return false}
+ current=chosen;currentSettings=settings;
+ renderResultFromCurrent();renderSoups();saveHistory();return true;
 }
-function excludeFromResult(name){avoid.add(name);localStorage.setItem("nuoheAvoid",JSON.stringify([...avoid]));renderAvoid();generate();toast("已排除："+name)}
+function excludeFromResult(name){avoid.add(name);localStorage.setItem("nuoheAvoid",JSON.stringify([...avoid]));renderAvoid();if(generate())toast("已排除："+name)}
 
 function renderSoups(){
- soupsEl=soups.map(s=>{let val=selectedSoups[s[0]]||0;return `<div class="dish"><div><div class="name">${s[0]}</div><div class="meta">${s[2]} · ¥${s[1]}</div></div><div class="dish-actions"><button class="btn secondary small" onclick="setSoup('${s[0]}',0)">不喝</button><button class="btn ${val?'green':'secondary'} small" onclick="setSoup('${s[0]}',${s[1]})">${val?'已选':'选这汤'}</button></div></div>`}).join("");
+ const soupsEl=soups.map(s=>{let val=selectedSoups[s[0]]||0;return `<div class="dish"><div><div class="name">${s[0]}</div><div class="meta">${s[2]} · ¥${s[1]}</div></div><div class="dish-actions"><button class="btn secondary small" onclick="setSoup('${s[0]}',0)">不喝</button><button class="btn ${val?'green':'secondary'} small" onclick="setSoup('${s[0]}',${s[1]})">${val?'已选':'选这汤'}</button></div></div>`}).join("");
  document.getElementById("soups").innerHTML=soupsEl;
 }
 function setSoup(name,price){if(price)selectedSoups={...selectedSoups,[name]:price};else delete selectedSoups[name];localStorage.setItem("nuoheSoups",JSON.stringify(selectedSoups));renderSoups();saveHistory(false);toast(price?name+" 已加入个人汤":"已取消")}
 function clearSoups(){selectedSoups={};localStorage.removeItem("nuoheSoups");renderSoups();toast("个人汤已清除")}
 
 function saveHistory(show=true){
- if(!current.length)return;
+ if(!current.length||!currentSettings)return;
  let arr=JSON.parse(localStorage.getItem("nuoheHistory")||"[]");
- const n=+people.value||1,total=current.reduce((s,x)=>s+x[1],0);
- const rec={time:new Date().toLocaleString("zh-CN",{hour12:false}),people:n,per:+perPerson.value||0,total,dishes:current.map(x=>({name:x[0],price:x[1],type:x[2]})),soups:{...selectedSoups}};
+ const total=currentTotalCents()/100;
+ const rec={time:new Date().toLocaleString("zh-CN",{hour12:false}),people:currentSettings.people,per:currentSettings.per,total,dishes:current.map(x=>({name:x[0],price:x[1],type:x[2]})),soups:{...selectedSoups}};
  arr.unshift(rec); // keep latest 30, dedupe same exact menu/time-ish
  arr=arr.slice(0,30);localStorage.setItem("nuoheHistory",JSON.stringify(arr));renderHistory();
 }
 function renderHistory(){
  let arr=JSON.parse(localStorage.getItem("nuoheHistory")||"[]");
- history.innerHTML=arr.length?arr.map((r,i)=>`<div class="history-item"><div class="hist-head"><b>${r.time} · ${r.people}人 · 公共菜 ${money(r.total)}</b><button class="btn danger small" onclick="delHistory(${i})">删除</button></div><div class="hist-detail">🍽️ ${r.dishes.map(d=>d.name+" ¥"+d.price).join("、")}<br>🍲 ${Object.keys(r.soups||{}).length?Object.entries(r.soups).map(([n,p])=>n+" ¥"+p).join("、"):"个人未选汤"}</div><button class="btn secondary small" onclick="reuse(${i})">再来一桌</button></div>`).join(""):"<div class='empty'>还没有点餐历史</div>";
+ document.getElementById("history").innerHTML=arr.length?arr.map((r,i)=>`<div class="history-item"><div class="hist-head"><b>${r.time} · ${r.people}人 · 公共菜 ${money(r.total)}</b><button class="btn danger small" onclick="delHistory(${i})">删除</button></div><div class="hist-detail">🍽️ ${r.dishes.map(d=>d.name+" ¥"+d.price).join("、")}<br>🍲 ${Object.keys(r.soups||{}).length?Object.entries(r.soups).map(([n,p])=>n+" ¥"+p).join("、"):"个人未选汤"}</div><button class="btn secondary small" onclick="reuse(${i})">再来一桌</button></div>`).join(""):"<div class='empty'>还没有点餐历史</div>";
 }
 function delHistory(i){let a=JSON.parse(localStorage.getItem("nuoheHistory")||"[]");a.splice(i,1);localStorage.setItem("nuoheHistory",JSON.stringify(a));renderHistory()}
 function clearHistory(){if(confirm("确定清空全部点餐历史？")){localStorage.removeItem("nuoheHistory");renderHistory()}}
-function reuse(i){let a=JSON.parse(localStorage.getItem("nuoheHistory")||"[]"),r=a[i];people.value=r.people;perPerson.value=r.per;current=r.dishes.map(d=>[d.name,d.price,d.type]);selectedSoups=r.soups||{};renderResultFromCurrent();renderSoups();updateBudget();toast("已恢复历史菜单")}
-function renderResultFromCurrent(){let n=+people.value,total=current.reduce((s,x)=>s+x[1],0);result.innerHTML=current.map((d,i)=>`<div class="dish"><div><div class="name">${i+1}. ${d[0]}</div><div class="meta">${d[2]}</div></div><span class="price">¥${d[1]}</span></div>`).join("");document.getElementById("total").textContent=money(total);document.getElementById("avg").textContent=money(total/n);document.getElementById("remain").textContent=money(Math.max(0,n*(+perPerson.value)-total));resultCard.style.display="block"}
+function reuse(i){
+ const r=JSON.parse(localStorage.getItem("nuoheHistory")||"[]")[i];if(!r)return;
+ clearCurrent();people.value=r.people;perPerson.value=r.per;selectedSoups={...(r.soups||{})};
+ localStorage.setItem("nuoheSoups",JSON.stringify(selectedSoups));renderSoups();updateBudget();
+ const settings=readOrderInputs();if(!settings){toast("历史参数无效，请修改人数和预算后重新生成");return}
+ const restored=r.dishes.map(d=>[d.name,d.price,d.type]);
+ if(restored.reduce((sum,d)=>sum+Math.round(d[1]*100),0)>settings.budgetCents){if(generate())toast("原历史菜单超预算，已按预算重新搭配");return}
+ current=restored;currentSettings=settings;renderResultFromCurrent();toast("已恢复历史菜单");
+}
+function renderResultFromCurrent(){
+ if(!current.length||!currentSettings)return;
+ const totalCents=currentTotalCents(),n=currentSettings.people;
+ result.innerHTML=current.map((d,i)=>`<div class="dish"><div><div class="name">${i+1}. ${d[0]}</div><div class="meta">${d[2]}</div></div><div class="dish-actions"><span class="price">¥${d[1]}</span><button class="btn danger small" onclick="excludeFromResult('${d[0]}')">不想吃</button></div></div>`).join("");
+ document.getElementById("total").textContent=money(totalCents/100);document.getElementById("avg").textContent=money(totalCents/100/n);document.getElementById("remain").textContent=money((currentSettings.budgetCents-totalCents)/100);
+ quality.textContent=current.length+" 道 · "+((current.some(d=>d[2]==="素菜")&&current.some(d=>d[2]==="荤菜"))?"荤素均衡":"随机组合");
+ resultCard.style.display="block";
+}
 
 function copyOrder(){
  if(!current.length){toast("请先生成菜单");return}
- let n=+people.value,total=current.reduce((s,x)=>s+x[1],0),lines=current.map((d,i)=>`${i+1}. ${d[0]} ¥${d[1]}`).join("\n");
+ let n=currentSettings.people,total=currentTotalCents()/100,lines=current.map((d,i)=>`${i+1}. ${d[0]} ¥${d[1]}`).join("\n");
  let soupLines=Object.entries(selectedSoups).map(([name,p])=>`- ${name} ¥${p}`).join("\n")||"暂无";
- let text=`🍱 诺合健康快餐｜今日点餐\n👥 ${n}人｜公共菜预算 ${money(n*(+perPerson.value))}\n\n公共AA菜：\n${lines}\n\n💰 公共菜合计 ${money(total)}，AA ${money(total/n)}/人\n\n🍲 个人汤（汤费不计入公共AA）：\n${soupLines}\n\n🍚 米饭免费`;
+ let text=`🍱 诺合健康快餐｜今日点餐\n👥 ${n}人｜公共菜预算 ${money(currentSettings.budgetCents/100)}\n\n公共AA菜：\n${lines}\n\n💰 公共菜合计 ${money(total)}，AA ${money(total/n)}/人\n\n🍲 个人汤（汤费不计入公共AA）：\n${soupLines}\n\n🍚 米饭免费`;
  navigator.clipboard?.writeText(text).then(()=>toast("已复制，可直接发微信群")).catch(()=>{prompt("复制下面内容发群：",text)})
 }
 function toast(t){let x=document.getElementById("toast");x.textContent=t;x.classList.add("show");setTimeout(()=>x.classList.remove("show"),1800)}
