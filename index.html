@@ -12,7 +12,8 @@
 .app{max-width:760px;margin:auto;padding-bottom:40px}.top{background:linear-gradient(135deg,#fff 0%,#fff5f8 100%);padding:18px 16px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
 .brand{display:flex;align-items:center;gap:10px}.logo{width:44px;height:44px;border-radius:13px;object-fit:contain;display:block;flex-shrink:0}.brand h1{font-size:20px;margin:0}.brand small{color:var(--muted)}
 main{padding:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 4px 18px #17202a08}.title{font-weight:800;font-size:17px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.field input,.field select{width:100%;border:1px solid #dce3e9;border-radius:11px;padding:11px;font-size:16px;background:#fff;outline:none}.field input:focus{border-color:#f08bb0;box-shadow:0 0 0 3px #ef4f8a15}.btn{border:0;border-radius:12px;padding:11px 14px;font-size:15px;font-weight:700;cursor:pointer}.primary{background:var(--pink);color:#fff}.secondary{background:#eef2f5;color:#334}.green{background:#e9f8f1;color:#128453}.danger{background:#fff0f2;color:#d73555}.wide{width:100%;margin-top:10px}.budget{display:flex;justify-content:space-between;background:#fafbfc;border-radius:12px;padding:11px 12px;margin-top:10px}.budget b{color:var(--pink)}.tags{display:flex;gap:7px;flex-wrap:wrap}.tag{padding:7px 10px;border-radius:999px;background:#f1f4f6;color:#47525c;font-size:12px}.tag.active{background:#ffe4ee;color:#d52e6b}.dish{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);gap:10px}.dish:last-child{border-bottom:0}.dish .name{font-weight:700}.dish .meta{font-size:12px;color:var(--muted);margin-top:3px}.price{font-weight:800;white-space:nowrap}.dish-actions{display:flex;gap:6px;align-items:center}.small{padding:7px 9px;font-size:12px}.result{border:2px solid #f3b4c9;background:#fffafd}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:#f8fafb;border-radius:12px;padding:10px}.metric span{display:block;font-size:11px;color:var(--muted)}.metric b{display:block;font-size:18px;margin-top:3px}.empty{padding:20px;text-align:center;color:var(--muted)}.history-item{padding:12px 0;border-bottom:1px solid var(--line)}.history-item:last-child{border-bottom:0}.hist-head{display:flex;justify-content:space-between;gap:10px}.hist-head b{font-size:14px}.hist-detail{color:#59656f;font-size:12px;line-height:1.7;margin-top:5px}.modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:20}.modal.show{display:flex}.sheet{background:#fff;width:100%;max-width:760px;margin:auto;border-radius:20px 20px 0 0;max-height:85vh;overflow:auto;padding:16px}.sheet h3{margin-top:0}.checkrow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}.checkrow input{width:20px;height:20px}.toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%);background:#20262d;color:#fff;padding:10px 15px;border-radius:999px;font-size:13px;display:none;z-index:30}.toast.show{display:block}.footer{text-align:center;color:#98a2ab;font-size:11px;padding:5px}
-@media(max-width:480px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr 1fr}.app{width:100%}}
+.btn:disabled{opacity:.5;cursor:default}
+@media(max-width:480px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr 1fr}.app{width:100%}.metric:last-child b{font-size:15px}}
 </style>
 </head>
 <body>
@@ -23,10 +24,12 @@ main{padding:14px}.card{background:var(--card);border:1px solid var(--line);bord
 <div class="title">🍽️ 今天吃什么</div>
 <div class="grid">
 <div class="field"><label>用餐人数</label><input id="people" type="number" min="1" value="6"></div>
-<div class="field"><label>公共菜人均预算（元）</label><input id="perPerson" type="number" min="1" step="1" value="25"></div>
+<div class="field"><label>人均目标预算（元）</label><input id="perPerson" type="number" min="1" step="1" value="25"></div>
 </div>
-<div class="budget"><span>公共菜总预算</span><b id="budget">¥150</b></div>
+<div class="budget"><span>共同目标总额</span><b id="budget">¥150</b></div>
+<div id="budgetRange" class="hist-detail"></div>
 <button class="btn primary wide" onclick="generate()">🎲 随机生成今天菜单</button>
+<div id="mealMessage" class="hist-detail" role="status"></div>
 </section>
 
 <section class="card">
@@ -36,12 +39,20 @@ main{padding:14px}.card{background:var(--card);border:1px solid var(--line);bord
 </section>
 
 <section id="resultCard" class="card result" style="display:none">
-<div class="title">🍱 今日公共AA菜单 <span id="quality" class="tag active"></span></div>
+<div class="title">🍱 今日AA菜单 <span id="quality" class="tag active"></span></div>
 <div id="result"></div>
+<div class="budget"><span>公共菜小计</span><b id="dishSubtotal">¥0</b></div>
+<div class="title" style="margin-top:18px">🍲 自动配汤 · 计入AA <span id="autoSoupCount" class="tag"></span></div>
+<div id="autoSoupResult"></div>
+<div class="grid">
+<button id="changeAutoSoupButton" class="btn secondary wide" onclick="changeAutoSoups()">换一组</button>
+<button id="cancelAutoSoupButton" class="btn secondary wide" onclick="cancelAutoSoups()">全部不喝</button>
+</div>
+<div class="budget"><span>自动汤小计</span><b id="autoSoupSubtotal">¥0</b></div>
 <div class="summary" style="margin-top:10px">
-<div class="metric"><span>公共菜合计</span><b id="total">¥0</b></div>
-<div class="metric"><span>公共AA/人</span><b id="avg">¥0</b></div>
-<div class="metric"><span>预算剩余</span><b id="remain">¥0</b></div>
+<div class="metric"><span>共同合计</span><b id="total">¥0</b></div>
+<div class="metric"><span>实际AA/人</span><b id="avg">¥0</b></div>
+<div class="metric"><span>与目标差额</span><b id="remain">¥0</b></div>
 </div>
 <button class="btn secondary wide" onclick="generate()">🔄 换一桌</button>
 <button class="btn green wide" onclick="copyOrder()">📋 复制到微信群</button>
@@ -49,7 +60,7 @@ main{padding:14px}.card{background:var(--card);border:1px solid var(--line);bord
 
 <section class="card">
 <div class="title">🍲 汤品 · 个人额外点</div>
-<div style="font-size:12px;color:#8a949c;margin-bottom:8px">汤不算公共菜、不占公共预算；每个人自己选择并自己承担。</div>
+<div style="font-size:12px;color:#8a949c;margin-bottom:8px">以下是自动配汤之外的额外选择，由点汤的人自付，不计入共同合计和AA。</div>
 <div id="soups"></div>
 <button class="btn secondary wide" onclick="clearSoups()">清除个人汤选择</button>
 </section>
@@ -79,17 +90,21 @@ const soups=[["花旗参乌鸡汤",10,"滋补"],["虫草花猪肚汤",10,"滋补
 
 let avoid=new Set(JSON.parse(localStorage.getItem("nuoheAvoid")||"[]"));
 let current=[], selectedSoups=JSON.parse(localStorage.getItem("nuoheSoups")||"{}");
-let currentSettings=null;
+let currentSettings=null,currentAutoSoups=[],currentAutoSoupsCancelled=false;
 
 function money(n){return "¥"+n.toFixed(2).replace(".00","")}
-function readOrderInputs(){
- const n=Number(people.value),per=Number(perPerson.value),budgetCents=n*per*100;
- if(!Number.isSafeInteger(n)||n<1||!Number.isSafeInteger(per)||per<1||!Number.isSafeInteger(budgetCents))return null;
- return {people:n,per,budgetCents};
+function budgetSettings(n,per){
+ const budgetCents=n*per*100,lowerCents=n*(per*100-99),upperCents=n*(per*100+99);
+ if(!Number.isSafeInteger(n)||n<1||!Number.isSafeInteger(per)||per<1||![budgetCents,lowerCents,upperCents].every(Number.isSafeInteger))return null;
+ return {people:n,per,budgetCents,lowerCents,upperCents};
 }
-function clearCurrent(){current=[];currentSettings=null;result.innerHTML="";resultCard.style.display="none"}
+function readOrderInputs(){return budgetSettings(Number(people.value),Number(perPerson.value))}
+function clearCurrent(){current=[];currentSettings=null;currentAutoSoups=[];currentAutoSoupsCancelled=false;result.innerHTML="";autoSoupResult.innerHTML="";mealMessage.textContent="";resultCard.style.display="none"}
 function currentTotalCents(){return current.reduce((sum,d)=>sum+Math.round(d[1]*100),0)}
-function updateBudget(){const settings=readOrderInputs();budget.textContent=settings?money(settings.budgetCents/100):"请输入正整数"}
+function autoSoupTotalCents(items=currentAutoSoups){return items.reduce((sum,s)=>sum+Math.round(s.price*100)*s.quantity,0)}
+function sharedTotalCents(){return currentTotalCents()+autoSoupTotalCents()}
+function targetDifference(totalCents,settings){const diff=totalCents-settings.budgetCents;return diff===0?"刚好达到":(diff>0?"多用 ":"少用 ")+money(Math.abs(diff)/100)}
+function updateBudget(){const settings=readOrderInputs();budget.textContent=settings?money(settings.budgetCents/100):"请输入正整数";budgetRange.textContent=settings?`含公共菜和自动汤；AA允许 ${money(settings.per-.99)}～${money(settings.per+.99)}/人，共同合计 ${money(settings.lowerCents/100)}～${money(settings.upperCents/100)}。`:"人数和人均目标预算须为正整数。"}
 people.oninput=perPerson.oninput=()=>{const hadCurrent=current.length>0;clearCurrent();updateBudget();if(hadCurrent)toast("人数或预算已更改，请重新生成菜单")};
 
 function renderAvoid(){
@@ -100,64 +115,125 @@ function closeAvoid(){avoidModal.classList.remove("show")}
 function saveAvoid(){const hadCurrent=current.length>0;avoid=new Set([...avoidList.querySelectorAll("input:checked")].map(x=>x.value));localStorage.setItem("nuoheAvoid",JSON.stringify([...avoid]));renderAvoid();closeAvoid();if(!hadCurrent||generate())toast("排除设置已保存")}
 function shuffle(a,random=Math.random){const copy=[...a];for(let i=copy.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
 
-function chooseMenu(pool,budgetCents,maxCount,random=Math.random){
+function menuStates(pool,budgetCents,maxCount,random){
  maxCount=Math.min(maxCount,pool.length);
  const states=Array.from({length:maxCount+1},()=>new Map());
- states[0].set("0:0",{total:0,mask:0,arr:[]});
+ states[0].set("0:0",{total:0,mask:0});
  // Descending counts keep each dish unique; maps contain only reachable sums.
  for(const dish of shuffle(pool,random)){
-   const price=Math.round(dish[1]*100),bit=dish[2]==="素菜"?1:dish[2]==="荤菜"?2:4;
+   const price=Math.round(dish[1]*100),bit=dish[2]==="素菜"?1:dish[2]==="荤菜"?2:["蛋类","豆制品"].includes(dish[2])?4:0;
    if(price>budgetCents)continue;
    for(let count=maxCount-1;count>=0;count--){
      for(const previous of states[count].values()){
        const total=previous.total+price,mask=previous.mask|bit,key=total+":"+mask;
        if(total>budgetCents)continue;
-       if(!states[count+1].has(key)||random()<.5)states[count+1].set(key,{total,mask,arr:[...previous.arr,dish]});
+       if(!states[count+1].has(key)||random()<.5)states[count+1].set(key,{total,mask,dish,previous});
      }
    }
  }
+ return states;
+}
+function betterRank(rank,bestRank,random){const i=bestRank?rank.findIndex((v,i)=>v!==bestRank[i]):-1;return !bestRank||i>=0&&rank[i]>bestRank[i]||i===-1&&random()<.5}
+function stateDishes(state,random){const chosen=[];for(let s=state;s&&s.dish;s=s.previous)chosen.push(s.dish);return shuffle(chosen,random)}
+function chooseMenu(pool,budgetCents,maxCount,random=Math.random){
+ const states=menuStates(pool,budgetCents,maxCount,random);
  let best=null,bestRank=null;
- for(let count=1;count<=maxCount;count++){
+ for(let count=1;count<states.length;count++){
    for(const candidate of states[count].values()){
      const rank=[Number((candidate.mask&3)===3),count,Number(Boolean(candidate.mask&4)),candidate.total];
-     const difference=bestRank?rank.findIndex((value,i)=>value!==bestRank[i]):-1;
-     if(!best||difference>=0&&rank[difference]>bestRank[difference]||difference===-1&&random()<.5){best=candidate;bestRank=rank}
+     if(betterRank(rank,bestRank,random)){best=candidate;bestRank=rank}
    }
  }
- return shuffle(best?best.arr:[],random);
+ return stateDishes(best,random);
+}
+function referenceCount(n){return n<=2?3:n<=4?4:n<=6?6:n<=9?7:9}
+// All soups cost 8 or 10 yuan. Solve the number of 10-yuan portions directly,
+// then allocate quantities by soup type, never by iterating over people.
+function soupRange(dishCents,settings){
+ const minimum=settings.people*800;
+ const low=Math.max(0,Math.ceil((settings.lowerCents-dishCents-minimum)/200));
+ const high=Math.min(settings.people,Math.floor((settings.upperCents-dishCents-minimum)/200));
+ if(low>high)return null;
+ return {low,high,closest:Math.max(low,Math.min(high,Math.round((settings.budgetCents-dishCents-minimum)/200)))};
+}
+function makeAutoSoups(n,expensive,random=Math.random){
+ const items=[];
+ for(const [price,quantity] of [[8,n-expensive],[10,expensive]]){
+   const kinds=shuffle(soups.filter(s=>s[1]===price),random).slice(0,quantity);
+   let remaining=quantity;
+   kinds.forEach((s,i)=>{const slots=kinds.length-i-1,q=slots?1+Math.floor(random()*(remaining-slots)):remaining;items.push({name:s[0],price,quantity:q});remaining-=q});
+ }
+ return items;
+}
+function chooseMeal(pool,settings,random=Math.random){
+ const base=chooseMenu(pool,settings.budgetCents,referenceCount(settings.people),random);
+ if(!base.length)base.push(...chooseMenu(pool,settings.upperCents,referenceCount(settings.people),random));
+ if(!base.length)return null;
+ const withSoup=settings.upperCents-base.reduce((s,d)=>s+Math.round(d[1]*100),0)>=settings.people*800;
+ const states=menuStates(pool,settings.upperCents-(withSoup?settings.people*800:0),pool.length,random);
+ let best=null,bestRank=null,bestSoupCount=0;
+ for(let count=base.length;count<states.length;count++){
+   for(const candidate of states[count].values()){
+     const range=withSoup?soupRange(candidate.total,settings):null;
+     if(withSoup?!range:candidate.total<settings.lowerCents||candidate.total>settings.upperCents)continue;
+     const expensive=range?range.closest:0,total=candidate.total+(withSoup?settings.people*800+expensive*200:0);
+     const rank=[Number((candidate.mask&3)===3),-count,Number(Boolean(candidate.mask&4)),-Math.abs(total-settings.budgetCents)];
+     if(betterRank(rank,bestRank,random)){best=candidate;bestRank=rank;bestSoupCount=expensive}
+   }
+ }
+ return best?{dishes:stateDishes(best,random),autoSoups:withSoup?makeAutoSoups(settings.people,bestSoupCount,random):[]}:null;
 }
 
 function generate(){
  clearCurrent();
  const settings=readOrderInputs();
- if(!settings){toast("请输入有效的正整数人数和人均预算");return false}
- const n=settings.people,count=n<=2?3:n<=4?4:n<=6?6:n<=9?7:9;
+ if(!settings){mealMessage.textContent="请输入有效的正整数人数和人均目标预算";toast(mealMessage.textContent);return false}
  const pool=dishes.filter(d=>!avoid.has(d[0]));
- const chosen=chooseMenu(pool,settings.budgetCents,count);
- if(!chosen.length){toast(pool.length?"预算不足，请提高预算或调整排除项":"没有可选菜品，请减少排除项");return false}
- current=chosen;currentSettings=settings;
+ const chosen=chooseMeal(pool,settings);
+ if(!chosen){mealMessage.textContent=pool.length?"无法配出目标人均 ±0.99 元内的组合，请调整预算、人数或排除项":"没有可选菜品，请减少排除项";toast(mealMessage.textContent);return false}
+ current=chosen.dishes;currentAutoSoups=chosen.autoSoups;currentSettings=settings;
  renderResultFromCurrent();renderSoups();saveHistory();return true;
 }
 function excludeFromResult(name){avoid.add(name);localStorage.setItem("nuoheAvoid",JSON.stringify([...avoid]));renderAvoid();if(generate())toast("已排除："+name)}
+function changeAutoSoups(){
+ if(!current.length||!currentSettings)return;
+ const range=soupRange(currentTotalCents(),currentSettings);
+ if(!range){toast("保持公共菜时，无法配出符合范围的全员汤，请换一桌");return}
+ const previous=JSON.stringify(currentAutoSoups);
+ let next;
+ for(let attempt=0;attempt<5;attempt++){
+   const expensive=range.low+Math.floor(Math.random()*(range.high-range.low+1));
+   next=makeAutoSoups(currentSettings.people,expensive);
+   if(JSON.stringify(next)!==previous)break;
+ }
+ currentAutoSoups=next;currentAutoSoupsCancelled=false;renderResultFromCurrent();saveHistory();toast("已更换全员配汤，公共菜不变");
+}
+function cancelAutoSoups(){
+ if(!currentAutoSoups.length)return;
+ currentAutoSoups=[];currentAutoSoupsCancelled=true;renderResultFromCurrent();saveHistory();toast("已取消自动汤，按真实费用AA，不自动补菜");
+}
 
 function renderSoups(){
  const soupsEl=soups.map(s=>{let val=selectedSoups[s[0]]||0;return `<div class="dish"><div><div class="name">${s[0]}</div><div class="meta">${s[2]} · ¥${s[1]}</div></div><div class="dish-actions"><button class="btn secondary small" onclick="setSoup('${s[0]}',0)">不喝</button><button class="btn ${val?'green':'secondary'} small" onclick="setSoup('${s[0]}',${s[1]})">${val?'已选':'选这汤'}</button></div></div>`}).join("");
  document.getElementById("soups").innerHTML=soupsEl;
 }
 function setSoup(name,price){if(price)selectedSoups={...selectedSoups,[name]:price};else delete selectedSoups[name];localStorage.setItem("nuoheSoups",JSON.stringify(selectedSoups));renderSoups();saveHistory(false);toast(price?name+" 已加入个人汤":"已取消")}
-function clearSoups(){selectedSoups={};localStorage.removeItem("nuoheSoups");renderSoups();toast("个人汤已清除")}
+function clearSoups(){selectedSoups={};localStorage.removeItem("nuoheSoups");renderSoups();saveHistory();toast("个人汤已清除")}
 
 function saveHistory(show=true){
  if(!current.length||!currentSettings)return;
  let arr=JSON.parse(localStorage.getItem("nuoheHistory")||"[]");
  const total=currentTotalCents()/100;
- const rec={time:new Date().toLocaleString("zh-CN",{hour12:false}),people:currentSettings.people,per:currentSettings.per,total,dishes:current.map(x=>({name:x[0],price:x[1],type:x[2]})),soups:{...selectedSoups}};
- arr.unshift(rec); // keep latest 30, dedupe same exact menu/time-ish
+ const rec={time:new Date().toLocaleString("zh-CN",{hour12:false}),people:currentSettings.people,per:currentSettings.per,total,dishes:current.map(x=>({name:x[0],price:x[1],type:x[2]})),soups:{...selectedSoups},autoSoups:currentAutoSoups.map(s=>({...s})),autoSoupsCancelled:currentAutoSoupsCancelled};
+ arr.unshift(rec);
  arr=arr.slice(0,30);localStorage.setItem("nuoheHistory",JSON.stringify(arr));renderHistory();
 }
 function renderHistory(){
  let arr=JSON.parse(localStorage.getItem("nuoheHistory")||"[]");
- document.getElementById("history").innerHTML=arr.length?arr.map((r,i)=>`<div class="history-item"><div class="hist-head"><b>${r.time} · ${r.people}人 · 公共菜 ${money(r.total)}</b><button class="btn danger small" onclick="delHistory(${i})">删除</button></div><div class="hist-detail">🍽️ ${r.dishes.map(d=>d.name+" ¥"+d.price).join("、")}<br>🍲 ${Object.keys(r.soups||{}).length?Object.entries(r.soups).map(([n,p])=>n+" ¥"+p).join("、"):"个人未选汤"}</div><button class="btn secondary small" onclick="reuse(${i})">再来一桌</button></div>`).join(""):"<div class='empty'>还没有点餐历史</div>";
+ document.getElementById("history").innerHTML=arr.length?arr.map((r,i)=>{
+   const auto=r.autoSoups||[],dishCents=r.dishes.reduce((s,d)=>s+Math.round(d.price*100),0),shared=dishCents+autoSoupTotalCents(auto);
+   return `<div class="history-item"><div class="hist-head"><b>${r.time} · ${r.people}人 · 共同 ${money(shared/100)} · AA ${money(shared/100/r.people)}/人</b><button class="btn danger small" onclick="delHistory(${i})">删除</button></div><div class="hist-detail">🍽️ 公共菜 ${money(dishCents/100)}：${r.dishes.map(d=>d.name+" ¥"+d.price).join("、")}<br>🍲 自动汤 ${money(autoSoupTotalCents(auto)/100)}：${auto.length?auto.map(s=>`${s.name} × ${s.quantity}份 × ${money(s.price)}`).join("、"):r.autoSoupsCancelled?"已主动取消，按真实费用AA":"无"}<br>个人额外汤（自付）：${Object.keys(r.soups||{}).length?Object.entries(r.soups).map(([n,p])=>n+" ¥"+p).join("、"):"无"}</div><button class="btn secondary small" onclick="reuse(${i})">再来一桌</button></div>`;
+ }).join(""):"<div class='empty'>还没有点餐历史</div>";
 }
 function delHistory(i){let a=JSON.parse(localStorage.getItem("nuoheHistory")||"[]");a.splice(i,1);localStorage.setItem("nuoheHistory",JSON.stringify(a));renderHistory()}
 function clearHistory(){if(confirm("确定清空全部点餐历史？")){localStorage.removeItem("nuoheHistory");renderHistory()}}
@@ -166,25 +242,34 @@ function reuse(i){
  clearCurrent();people.value=r.people;perPerson.value=r.per;selectedSoups={...(r.soups||{})};
  localStorage.setItem("nuoheSoups",JSON.stringify(selectedSoups));renderSoups();updateBudget();
  const settings=readOrderInputs();if(!settings){toast("历史参数无效，请修改人数和预算后重新生成");return}
- const restored=r.dishes.map(d=>[d.name,d.price,d.type]);
- if(restored.reduce((sum,d)=>sum+Math.round(d[1]*100),0)>settings.budgetCents){if(generate())toast("原历史菜单超预算，已按预算重新搭配");return}
- current=restored;currentSettings=settings;renderResultFromCurrent();toast("已恢复历史菜单");
+ const restored=r.dishes.map(d=>[d.name,d.price,d.type]),auto=r.autoSoups||[],cancelled=r.autoSoupsCancelled===true;
+ const quantity=auto.reduce((sum,s)=>sum+s.quantity,0),shared=restored.reduce((sum,d)=>sum+Math.round(d[1]*100),0)+autoSoupTotalCents(auto);
+ const validDishes=restored.length>0&&new Set(restored.map(d=>d[0])).size===restored.length&&restored.every(d=>!avoid.has(d[0])&&dishes.some(known=>known[0]===d[0]&&known[1]===d[1]));
+ const validSoups=auto.every(s=>Number.isSafeInteger(s.quantity)&&s.quantity>0&&soups.some(known=>known[0]===s.name&&known[1]===s.price))&&(cancelled?quantity===0:quantity===0||quantity===settings.people);
+ if(!validDishes||!validSoups||shared>settings.upperCents||!cancelled&&shared<settings.lowerCents){if(generate())toast("历史菜单不符合当前范围或排除项，已重新搭配");return}
+ current=restored;currentSettings=settings;currentAutoSoups=auto.map(s=>({...s}));currentAutoSoupsCancelled=cancelled;renderResultFromCurrent();toast("已恢复历史菜单");
 }
 function renderResultFromCurrent(){
  if(!current.length||!currentSettings)return;
- const totalCents=currentTotalCents(),n=currentSettings.people;
+ const totalCents=sharedTotalCents(),n=currentSettings.people;
  result.innerHTML=current.map((d,i)=>`<div class="dish"><div><div class="name">${i+1}. ${d[0]}</div><div class="meta">${d[2]}</div></div><div class="dish-actions"><span class="price">¥${d[1]}</span><button class="btn danger small" onclick="excludeFromResult('${d[0]}')">不想吃</button></div></div>`).join("");
- document.getElementById("total").textContent=money(totalCents/100);document.getElementById("avg").textContent=money(totalCents/100/n);document.getElementById("remain").textContent=money((currentSettings.budgetCents-totalCents)/100);
+ dishSubtotal.textContent=money(currentTotalCents()/100);autoSoupSubtotal.textContent=money(autoSoupTotalCents()/100);
+ autoSoupCount.textContent=currentAutoSoups.reduce((sum,s)=>sum+s.quantity,0)+" 份";
+ autoSoupResult.innerHTML=currentAutoSoups.length?currentAutoSoups.map(s=>`<div class="dish"><div><div class="name">${s.name} × ${s.quantity}份 × ${money(s.price)}</div><div class="meta">全员配汤 · 计入AA</div></div><span class="price">${money(s.quantity*s.price)}</span></div>`).join(""):`<div class="hist-detail">${currentAutoSoupsCancelled?"已主动取消自动汤，按真实费用AA；允许低于目标下限，不自动补菜。":"本桌优先配公共菜，当前未自动配汤。"}</div>`;
+ changeAutoSoupButton.disabled=!soupRange(currentTotalCents(),currentSettings);changeAutoSoupButton.textContent=currentAutoSoupsCancelled?"重新配汤":"换一组";cancelAutoSoupButton.disabled=!currentAutoSoups.length;
+ document.getElementById("total").textContent=money(totalCents/100);document.getElementById("avg").textContent=money(totalCents/100/n);document.getElementById("remain").textContent=targetDifference(totalCents,currentSettings);
  quality.textContent=current.length+" 道 · "+((current.some(d=>d[2]==="素菜")&&current.some(d=>d[2]==="荤菜"))?"荤素均衡":"随机组合");
  resultCard.style.display="block";
 }
 
 function copyOrder(){
  if(!current.length){toast("请先生成菜单");return}
- let n=currentSettings.people,total=currentTotalCents()/100,lines=current.map((d,i)=>`${i+1}. ${d[0]} ¥${d[1]}`).join("\n");
+ let n=currentSettings.people,total=sharedTotalCents()/100,lines=current.map((d,i)=>`${i+1}. ${d[0]} ¥${d[1]}`).join("\n");
  let soupLines=Object.entries(selectedSoups).map(([name,p])=>`- ${name} ¥${p}`).join("\n")||"暂无";
- let text=`🍱 诺合健康快餐｜今日点餐\n👥 ${n}人｜公共菜预算 ${money(currentSettings.budgetCents/100)}\n\n公共AA菜：\n${lines}\n\n💰 公共菜合计 ${money(total)}，AA ${money(total/n)}/人\n\n🍲 个人汤（汤费不计入公共AA）：\n${soupLines}\n\n🍚 米饭免费`;
- navigator.clipboard?.writeText(text).then(()=>toast("已复制，可直接发微信群")).catch(()=>{prompt("复制下面内容发群：",text)})
+ let autoLines=currentAutoSoups.map(s=>`- ${s.name} × ${s.quantity}份 × ${money(s.price)} = ${money(s.quantity*s.price)}`).join("\n")||(currentAutoSoupsCancelled?"已主动取消自动汤，按真实费用AA，不自动补菜":"暂无");
+ let text=`🍱 诺合健康快餐｜今日点餐\n👥 ${n}人｜目标 ${money(currentSettings.per)}/人｜共同目标 ${money(currentSettings.budgetCents/100)}\n\n公共菜：\n${lines}\n公共菜小计 ${money(currentTotalCents()/100)}\n\n🍲 自动配汤（计入AA）：\n${autoLines}\n自动汤小计 ${money(autoSoupTotalCents()/100)}\n\n💰 共同合计 ${money(total)}，实际AA ${money(total/n)}/人\n与目标相比：${targetDifference(sharedTotalCents(),currentSettings)}\n\n个人额外汤（自付，不计入共同AA）：\n${soupLines}\n\n🍚 米饭免费`;
+ if(!navigator.clipboard){prompt("复制下面内容发群：",text);return}
+ navigator.clipboard.writeText(text).then(()=>toast("已复制，可直接发微信群")).catch(()=>{prompt("复制下面内容发群：",text)})
 }
 function toast(t){let x=document.getElementById("toast");x.textContent=t;x.classList.add("show");setTimeout(()=>x.classList.remove("show"),1800)}
 renderAvoid();renderHistory();renderSoups();updateBudget();
