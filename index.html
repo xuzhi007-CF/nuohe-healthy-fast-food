@@ -13,6 +13,7 @@
 .brand{display:flex;align-items:center;gap:10px}.logo{width:44px;height:44px;border-radius:13px;object-fit:contain;display:block;flex-shrink:0}.brand h1{font-size:20px;margin:0}.brand small{color:var(--muted)}
 main{padding:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 4px 18px #17202a08}.title{font-weight:800;font-size:17px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.field input,.field select{width:100%;border:1px solid #dce3e9;border-radius:11px;padding:11px;font-size:16px;background:#fff;outline:none}.field input:focus{border-color:#f08bb0;box-shadow:0 0 0 3px #ef4f8a15}.btn{border:0;border-radius:12px;padding:11px 14px;font-size:15px;font-weight:700;cursor:pointer}.primary{background:var(--pink);color:#fff}.secondary{background:#eef2f5;color:#334}.green{background:#e9f8f1;color:#128453}.danger{background:#fff0f2;color:#d73555}.wide{width:100%;margin-top:10px}.budget{display:flex;justify-content:space-between;background:#fafbfc;border-radius:12px;padding:11px 12px;margin-top:10px}.budget b{color:var(--pink)}.tags{display:flex;gap:7px;flex-wrap:wrap}.tag{padding:7px 10px;border-radius:999px;background:#f1f4f6;color:#47525c;font-size:12px}.tag.active{background:#ffe4ee;color:#d52e6b}.dish{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);gap:10px}.dish:last-child{border-bottom:0}.dish .name{font-weight:700}.dish .meta{font-size:12px;color:var(--muted);margin-top:3px}.price{font-weight:800;white-space:nowrap}.dish-actions{display:flex;gap:6px;align-items:center}.small{padding:7px 9px;font-size:12px}.result{border:2px solid #f3b4c9;background:#fffafd}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.metric{background:#f8fafb;border-radius:12px;padding:10px}.metric span{display:block;font-size:11px;color:var(--muted)}.metric b{display:block;font-size:18px;margin-top:3px}.empty{padding:20px;text-align:center;color:var(--muted)}.history-item{padding:12px 0;border-bottom:1px solid var(--line)}.history-item:last-child{border-bottom:0}.hist-head{display:flex;justify-content:space-between;gap:10px}.hist-head b{font-size:14px}.hist-detail{color:#59656f;font-size:12px;line-height:1.7;margin-top:5px}.modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:20}.modal.show{display:flex}.sheet{background:#fff;width:100%;max-width:760px;margin:auto;border-radius:20px 20px 0 0;max-height:85vh;overflow:auto;padding:16px}.sheet h3{margin-top:0}.checkrow{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}.checkrow input{width:20px;height:20px}.toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%);background:#20262d;color:#fff;padding:10px 15px;border-radius:999px;font-size:13px;display:none;z-index:30}.toast.show{display:block}.footer{text-align:center;color:#98a2ab;font-size:11px;padding:5px}
 .btn:disabled{opacity:.5;cursor:default}
+.replacement-sheet{display:flex;flex-direction:column;overflow:hidden}.replacement-list{overflow:auto;min-height:0}.replacement-list .checkrow{gap:12px}.replacement-meta{display:block;color:var(--muted);font-size:12px;line-height:1.6}.unavailable{color:var(--muted)}.replacement-footer{border-top:1px solid var(--line);padding-top:10px}.replacement-footer .grid{margin-top:10px}
 @media(max-width:480px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:1fr 1fr 1fr}.app{width:100%}.metric:last-child b{font-size:15px}}
 </style>
 </head>
@@ -78,6 +79,16 @@ main{padding:14px}.card{background:var(--card);border:1px solid var(--line);bord
 <button class="btn primary wide" onclick="saveAvoid()">保存排除设置</button>
 <button class="btn secondary wide" onclick="closeAvoid()">取消</button>
 </div></div>
+<div id="replacementModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="replacementTitle" onclick="if(event.target===this)closeReplacement()"><div class="sheet replacement-sheet">
+<h3 id="replacementTitle" tabindex="-1">选择替换菜品</h3>
+<div id="replacementInfo" class="hist-detail"></div>
+<div id="replacementRange" class="hist-detail"></div>
+<div id="replacementList" class="replacement-list"></div>
+<div class="replacement-footer">
+<div id="replacementMessage" class="hist-detail" role="status">请勾选一道替换菜品。</div>
+<div class="grid"><button id="confirmReplacementButton" class="btn primary" onclick="confirmReplacement()" disabled>确认换菜</button><button class="btn secondary" onclick="closeReplacement()">取消换菜</button></div>
+</div>
+</div></div>
 <div id="toast" class="toast"></div>
 
 <script>
@@ -91,6 +102,7 @@ const soups=[["花旗参乌鸡汤",10,"滋补"],["虫草花猪肚汤",10,"滋补
 let avoid=new Set(JSON.parse(localStorage.getItem("nuoheAvoid")||"[]"));
 let current=[], selectedSoups=JSON.parse(localStorage.getItem("nuoheSoups")||"{}");
 let currentSettings=null,currentAutoSoups=[],currentAutoSoupsCancelled=false;
+let pendingReplacement=null,selectedReplacement=null,replacementOpener=null;
 
 function money(n){return "¥"+n.toFixed(2).replace(".00","")}
 function budgetSettings(n,per){
@@ -99,7 +111,7 @@ function budgetSettings(n,per){
  return {people:n,per,budgetCents,lowerCents,upperCents};
 }
 function readOrderInputs(){return budgetSettings(Number(people.value),Number(perPerson.value))}
-function clearCurrent(){current=[];currentSettings=null;currentAutoSoups=[];currentAutoSoupsCancelled=false;result.innerHTML="";autoSoupResult.innerHTML="";mealMessage.textContent="";resultCard.style.display="none"}
+function clearCurrent(){closeReplacement();current=[];currentSettings=null;currentAutoSoups=[];currentAutoSoupsCancelled=false;result.innerHTML="";autoSoupResult.innerHTML="";mealMessage.textContent="";resultCard.style.display="none"}
 function currentTotalCents(){return current.reduce((sum,d)=>sum+Math.round(d[1]*100),0)}
 function autoSoupTotalCents(items=currentAutoSoups){return items.reduce((sum,s)=>sum+Math.round(s.price*100)*s.quantity,0)}
 function sharedTotalCents(){return currentTotalCents()+autoSoupTotalCents()}
@@ -194,7 +206,52 @@ function generate(){
  current=chosen.dishes;currentAutoSoups=chosen.autoSoups;currentSettings=settings;
  renderResultFromCurrent();renderSoups();saveHistory();return true;
 }
-function excludeFromResult(name){avoid.add(name);localStorage.setItem("nuoheAvoid",JSON.stringify([...avoid]));renderAvoid();if(generate())toast("已排除："+name)}
+function replacementPlan(index,name){
+ if(!currentSettings||!Number.isInteger(index)||!current[index])return null;
+ const dish=dishes.find(d=>d[0]===name);
+ if(!dish||avoid.has(name)||current.some(d=>d[0]===name))return null;
+ const totalCents=sharedTotalCents()-Math.round(current[index][1]*100)+Math.round(dish[1]*100);
+ const reason=totalCents>currentSettings.upperCents?"超出人均上限":!currentAutoSoupsCancelled&&totalCents<currentSettings.lowerCents?"低于人均下限":"";
+ return {dish,totalCents,allowed:!reason,reason};
+}
+function openReplacement(name){
+ const index=current.findIndex(d=>d[0]===name);
+ if(index<0||!currentSettings)return false;
+ pendingReplacement={index,originalName:name};selectedReplacement=null;replacementOpener=document.activeElement;
+ const options=dishes.map(d=>replacementPlan(index,d[0])).filter(Boolean);
+ replacementTitle.textContent="替换："+name;
+ replacementInfo.textContent=`请勾选一道菜替换 ${name}（${money(current[index][1])}），其他菜和汤保持不变。`;
+ replacementRange.textContent=currentAutoSoupsCancelled?`自动汤已主动取消，按真实费用AA；人均不得超过 ${money(currentSettings.per+.99)}。`:`更换后AA须在 ${money(currentSettings.per-.99)}～${money(currentSettings.per+.99)}/人内。`;
+ replacementList.innerHTML=options.length?options.sort((a,b)=>Number(b.allowed)-Number(a.allowed)).map(p=>`<label class="checkrow ${p.allowed?"":"unavailable"}"><span><b>${p.dish[0]}</b><small class="replacement-meta">${p.dish[2]} · ${money(p.dish[1])}</small><small class="replacement-meta">更换后 AA ${money(p.totalCents/100/currentSettings.people)}/人${p.reason?" · "+p.reason:""}</small></span><input type="checkbox" value="${p.dish[0]}" ${p.allowed?"":"disabled"} onchange="selectReplacement('${p.dish[0]}',this.checked)"></label>`).join(""):"<div class='empty'>没有其他可选菜品</div>";
+ replacementMessage.textContent=options.some(p=>p.allowed)?"请勾选一道替换菜品。":"当前没有符合预算范围的替换菜品，可取消后换一桌或调整预算。";
+ confirmReplacementButton.disabled=true;replacementModal.classList.add("show");replacementTitle.focus();return true;
+}
+function selectReplacement(name,checked=true){
+ const plan=pendingReplacement?replacementPlan(pendingReplacement.index,name):null;
+ selectedReplacement=checked&&plan?.allowed?name:null;
+ for(const input of replacementList.querySelectorAll("input"))input.checked=input.value===selectedReplacement;
+ confirmReplacementButton.disabled=!selectedReplacement;
+ replacementMessage.textContent=selectedReplacement?`已选 ${name}：共同合计 ${money(plan.totalCents/100)}，AA ${money(plan.totalCents/100/currentSettings.people)}/人。`:"请勾选一道符合预算范围的替换菜品。";
+}
+function closeReplacement(){replacementModal.classList.remove("show");pendingReplacement=null;selectedReplacement=null;confirmReplacementButton.disabled=true;const opener=replacementOpener;replacementOpener=null;if(opener?.isConnected)opener.focus()}
+function confirmReplacement(){
+ if(!pendingReplacement||!selectedReplacement)return false;
+ const {index,originalName}=pendingReplacement;
+ if(current[index]?.[0]!==originalName){closeReplacement();toast("菜单已更新，请重新选择要换的菜");return false}
+ const plan=replacementPlan(index,selectedReplacement);
+ if(!plan?.allowed){replacementMessage.textContent="这道菜已不符合当前预算或排除设置，请重新勾选。";confirmReplacementButton.disabled=true;return false}
+ current=current.map((d,i)=>i===index?plan.dish:d);
+ closeReplacement();renderResultFromCurrent();result.querySelectorAll("button")[index]?.focus();saveHistory();toast(`已将 ${originalName} 换成 ${plan.dish[0]}`);return true;
+}
+replacementModal.onkeydown=event=>{
+ if(event.key==="Escape"){event.preventDefault();closeReplacement();return}
+ if(event.key!=="Tab")return;
+ const controls=[...replacementModal.querySelectorAll("input:not(:disabled),button:not(:disabled)")],first=controls[0],last=controls[controls.length-1];
+ if(!first)return;
+ const active=document.activeElement;
+ if(event.shiftKey&&(active===first||active===replacementTitle)){event.preventDefault();last.focus()}
+ else if(!event.shiftKey&&(active===last||active===replacementTitle)){event.preventDefault();first.focus()}
+};
 function changeAutoSoups(){
  if(!current.length||!currentSettings)return;
  const range=soupRange(currentTotalCents(),currentSettings);
@@ -252,7 +309,7 @@ function reuse(i){
 function renderResultFromCurrent(){
  if(!current.length||!currentSettings)return;
  const totalCents=sharedTotalCents(),n=currentSettings.people;
- result.innerHTML=current.map((d,i)=>`<div class="dish"><div><div class="name">${i+1}. ${d[0]}</div><div class="meta">${d[2]}</div></div><div class="dish-actions"><span class="price">¥${d[1]}</span><button class="btn danger small" onclick="excludeFromResult('${d[0]}')">不想吃</button></div></div>`).join("");
+ result.innerHTML=current.map((d,i)=>`<div class="dish"><div><div class="name">${i+1}. ${d[0]}</div><div class="meta">${d[2]}</div></div><div class="dish-actions"><span class="price">¥${d[1]}</span><button class="btn danger small" onclick="openReplacement('${d[0]}')">不想吃</button></div></div>`).join("");
  dishSubtotal.textContent=money(currentTotalCents()/100);autoSoupSubtotal.textContent=money(autoSoupTotalCents()/100);
  autoSoupCount.textContent=currentAutoSoups.reduce((sum,s)=>sum+s.quantity,0)+" 份";
  autoSoupResult.innerHTML=currentAutoSoups.length?currentAutoSoups.map(s=>`<div class="dish"><div><div class="name">${s.name} × ${s.quantity}份 × ${money(s.price)}</div><div class="meta">全员配汤 · 计入AA</div></div><span class="price">${money(s.quantity*s.price)}</span></div>`).join(""):`<div class="hist-detail">${currentAutoSoupsCancelled?"已主动取消自动汤，按真实费用AA；允许低于目标下限，不自动补菜。":"本桌优先配公共菜，当前未自动配汤。"}</div>`;
